@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vitiu</title>
   <style>
     html, body {
@@ -10,14 +10,13 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      touch-action: manipulation; /* Improves touch responsiveness */
     }
 
     body {
       background: black;
       color: white;
       font-family: sans-serif;
-      perspective: 800px; /* Reduced perspective for better mobile view */
+      perspective: 1000px;
     }
 
     .scene-wrapper {
@@ -37,62 +36,62 @@
 
     .star {
       position: absolute;
-      width: 2px; /* Slightly smaller stars for mobile */
-      height: 2px;
+      width: 3px;
+      height: 3px;
       background: white;
       border-radius: 50%;
-      opacity: 0.6;
-      filter: blur(0.8px);
+      opacity: 0.5; /* Tăng độ sáng */
+      filter: blur(1px);
       box-shadow: 
-        0 0 6px white,
-        0 0 12px rgba(255, 255, 255, 0.7),
-        0 0 20px rgba(255, 255, 255, 0.4);
+        0 0 8px white, /* Ánh sáng gần */
+        0 0 15px rgba(255, 255, 255, 0.7), /* Ánh sáng trung bình */
+        0 0 25px rgba(255, 255, 255, 0.4); /* Ánh sáng lan tỏa xa */
     }
 
     .float-text {
       position: absolute;
-      font-size: clamp(14px, 3vw, 16px); /* Responsive font size */
+      font-size: 20px;
       color: hotpink;
       opacity: 0.9;
-      animation: floatUp 12s linear infinite; /* Slower animation */
+      animation: floatUp 10s linear infinite;
       white-space: nowrap;
       text-shadow: 
-        0 0 6px hotpink,
-        0 0 12px hotpink,
-        0 0 20px rgba(255, 105, 180, 0.8);
-      pointer-events: none; /* Prevent text from interfering with touch */
+        0 0 8px hotpink,
+        0 0 15px hotpink,
+        0 0 25px rgba(255, 105, 180, 0.8),
+        0 0 40px rgba(255, 105, 180, 0.6);
     }
 
     .heart {
       position: absolute;
-      width: 16px; /* Smaller hearts for mobile */
-      height: 16px;
+      width: 20px;
+      height: 20px;
       background-color: hotpink;
       transform: rotate(45deg);
-      animation: floatUp 12s linear infinite;
+      animation: floatUp 10s linear infinite;
       opacity: 0.8;
       box-shadow: 
-        0 0 8px hotpink,
-        0 0 16px rgba(255, 105, 180, 0.7);
+        0 0 10px hotpink,
+        0 0 20px rgba(255, 105, 180, 0.7);
     }
 
     .heart::before,
     .heart::after {
       content: '';
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       background-color: hotpink;
       border-radius: 50%;
     }
 
     .heart::before {
-      top: -8px;
+      top: -10px;
       left: 0;
     }
 
     .heart::after {
-      left: -8px;
+      left: -10px;
       top: 0;
     }
 
@@ -135,18 +134,18 @@
     const youtubeAudio = document.getElementById('youtube-audio');
 
     const phrases = [
-      "Anh yêu em",
-      "Nhớ em",
-      "Mãi bên nhau nha",
-      "Vịt yêu của anh",
-      "Mèo yêu Vịt",
-      "Yêu em nhiều lắm"
+        "Anh yêu em",
+        "Nhớ em",
+        "Mãi bên nhau nha",
+        "Vịt yêu của anh",
+        "Mèo yêu Vịt",
+        "Yêu em nhiều lắm",
+
     ];
 
     const textPool = [];
     const heartPool = [];
-    const maxElements = 30; // Reduced max elements
-    const minDistance = 100; // Minimum distance between texts
+    const maxElements = 50;
 
     const stars = [];
     function createStar() {
@@ -158,7 +157,7 @@
       return star;
     }
 
-    for (let i = 0; i < 150; i++) { // Reduced star count
+    for (let i = 0; i < 200; i++) {
       stars.push(createStar());
     }
 
@@ -169,87 +168,54 @@
       });
     }
 
-    function isPositionValid(x, y, elements) {
-      return Array.from(elements).every(el => {
-        if (el.style.display === 'none') return true;
-        const elX = parseFloat(el.style.left);
-        const elY = parseFloat(el.style.top);
-        const distance = Math.sqrt((x - elX) ** 2 + (y - elY) ** 2);
-        return distance > minDistance;
-      });
-    }
-
     function createFloatingText() {
-      if (textPool.length === 0 && scene.getElementsByClassName('float-text').length >= maxElements) {
-        return;
-      }
-
       let text;
       if (textPool.length > 0) {
         text = textPool.pop();
         text.style.display = 'block';
-      } else {
+      } else if (scene.getElementsByClassName('float-text').length < maxElements) {
         text = document.createElement('div');
         text.className = 'float-text';
         scene.appendChild(text);
+      } else {
+        return;
       }
 
-      let attempts = 0;
-      let x, y;
-      do {
-        x = Math.random() * (window.innerWidth - 100);
-        y = window.innerHeight;
-        attempts++;
-        if (attempts > 10) return; // Prevent infinite loops
-      } while (!isPositionValid(x, y, scene.getElementsByClassName('float-text')));
-
       text.innerText = phrases[Math.floor(Math.random() * phrases.length)];
-      text.style.left = x + 'px';
-      text.style.top = y + 'px';
-      text.style.animationDuration = 10 + Math.random() * 4 + 's';
-      text.style.fontSize = clamp(14, 3 * window.innerWidth / 100, 16) + 'px';
+      text.style.left = Math.random() * window.innerWidth + 'px';
+      text.style.animationDuration = 8 + Math.random() * 5 + 's';
+      text.style.fontSize = 16 + Math.random() * 14 + 'px';
 
       setTimeout(() => {
         text.style.display = 'none';
         textPool.push(text);
-      }, 14000);
+      }, 13000);
     }
 
     function createHeart() {
-      if (heartPool.length === 0 && scene.getElementsByClassName('heart').length >= maxElements) {
-        return;
-      }
-
       let heart;
       if (heartPool.length > 0) {
         heart = heartPool.pop();
         heart.style.display = 'block';
-      } else {
+      } else if (scene.getElementsByClassName('heart').length < maxElements) {
         heart = document.createElement('div');
         heart.className = 'heart';
         scene.appendChild(heart);
+      } else {
+        return;
       }
 
-      let x;
-      let attempts = 0;
-      do {
-        x = Math.random() * (window.innerWidth - 100);
-        attempts++;
-        if (attempts > 10) return;
-      } while (!isPositionValid(x, window.innerHeight, scene.getElementsByClassName('heart')));
-
-      heart.style.left = x + 'px';
-      heart.style.top = window.innerHeight + 'px';
-      heart.style.animationDuration = 10 + Math.random() * 4 + 's';
+      heart.style.left = Math.random() * window.innerWidth + 'px';
+      heart.style.animationDuration = 8 + Math.random() * 5 + 's';
 
       setTimeout(() => {
         heart.style.display = 'none';
         heartPool.push(heart);
-      }, 14000);
+      }, 13000);
     }
 
-    setInterval(createFloatingText, 600); // Slower spawn rate
-    setInterval(createHeart, 1000); // Slower spawn rate
+    setInterval(createFloatingText, 400);
+    setInterval(createHeart, 800);
 
     window.addEventListener('resize', updateStars);
 
@@ -286,10 +252,12 @@
 
     window.addEventListener('mousemove', e => {
       if (isDragging) {
-        targetRotateY += (e.clientX - lastX) * 0.15; // Reduced sensitivity
-        targetRotateX -= (e.clientY - lastY) * 0.15;
-        targetRotateX = clamp(targetRotateX, -20, 20); // Reduced rotation range
-        targetRotateY = clamp(targetRotateY, -20, 20);
+        targetRotateY += (e.clientX - lastX) * 0.2;
+        targetRotateX -= (e.clientY - lastY) * 0.2;
+
+        targetRotateX = clamp(targetRotateX, -30, 30);
+        targetRotateY = clamp(targetRotateY, -30, 30);
+
         lastX = e.clientX;
         lastY = e.clientY;
       }
@@ -309,10 +277,12 @@
       const touch = e.touches[0];
       let dx = touch.clientX - touchStartX;
       let dy = touch.clientY - touchStartY;
-      targetRotateY += dx * 0.15;
-      targetRotateX -= dy * 0.15;
-      targetRotateX = clamp(targetRotateX, -20, 20);
-      targetRotateY = clamp(targetRotateY, -20, 20);
+      targetRotateY += dx * 0.2;
+      targetRotateX -= dy * 0.2;
+
+      targetRotateX = clamp(targetRotateX, -30, 30);
+      targetRotateY = clamp(targetRotateY, -30, 30);
+
       touchStartX = touch.clientX;
       touchStartY = touch.clientY;
     });
