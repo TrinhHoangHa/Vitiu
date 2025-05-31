@@ -10,14 +10,14 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      touch-action: manipulation; 
+      touch-action: manipulation; /* Improves touch responsiveness */
     }
 
     body {
       background: black;
       color: white;
       font-family: sans-serif;
-      perspective: 800px; 
+      perspective: 800px; /* Reduced perspective for better mobile view */
     }
 
     .scene-wrapper {
@@ -37,62 +37,62 @@
 
     .star {
       position: absolute;
-      width: 3px;
-      height: 3px;
+      width: 2px; /* Slightly smaller stars for mobile */
+      height: 2px;
       background: white;
       border-radius: 50%;
-      opacity: 0.5;
-      filter: blur(1px);
+      opacity: 0.6;
+      filter: blur(0.8px);
       box-shadow: 
-        0 0 8px white,
-        0 0 15px rgba(255, 255, 255, 0.7),
-        0 0 25px rgba(255, 255, 255, 0.4);
+        0 0 6px white,
+        0 0 12px rgba(255, 255, 255, 0.7),
+        0 0 20px rgba(255, 255, 255, 0.4);
     }
 
     .float-text {
       position: absolute;
-      font-size: 20px;
+      font-size: clamp(14px, 3vw, 16px); /* Responsive font size */
       color: hotpink;
       opacity: 0.9;
-      animation: floatUp 10s linear infinite;
+      animation: floatUp 12s linear infinite; /* Slower animation */
       white-space: nowrap;
       text-shadow: 
-        0 0 8px hotpink,
-        0 0 15px hotpink,
-        0 0 25px rgba(255, 105, 180, 0.8),
-        0 0 40px rgba(255, 105, 180, 0.6);
+        0 0 6px hotpink,
+        0 0 12px hotpink,
+        0 0 20px rgba(255, 105, 180, 0.8);
+      pointer-events: none; /* Prevent text from interfering with touch */
     }
 
     .heart {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 16px; /* Smaller hearts for mobile */
+      height: 16px;
       background-color: hotpink;
       transform: rotate(45deg);
-      animation: floatUp 10s linear infinite;
+      animation: floatUp 12s linear infinite;
       opacity: 0.8;
       box-shadow: 
-        0 0 10px hotpink,
-        0 0 20px rgba(255, 105, 180, 0.7);
+        0 0 8px hotpink,
+        0 0 16px rgba(255, 105, 180, 0.7);
     }
 
     .heart::before,
     .heart::after {
       content: '';
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       background-color: hotpink;
       border-radius: 50%;
     }
 
     .heart::before {
-      top: -10px;
+      top: -8px;
       left: 0;
     }
 
     .heart::after {
-      left: -10px;
+      left: -8px;
       top: 0;
     }
 
@@ -121,65 +121,12 @@
       height: 0;
       position: absolute;
     }
-
-    .controls {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      z-index: 1000;
-      display: flex;
-      gap: 5px;
-    }
-
-    .controls button {
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-      font-size: 14px;
-      touch-action: manipulation;
-    }
-
-    .controls button:hover {
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    @media (max-width: 600px) {
-      .float-text {
-        font-size: 14px; 
-      }
-      .heart {
-        width: 15px;
-        height: 15px;
-      }
-      .heart::before, .heart::after {
-        width: 15px;
-        height: 15px;
-      }
-      .heart::before {
-        top: -7.5px;
-      }
-      .heart::after {
-        left: -7.5px;
-      }
-      .controls button {
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-    }
   </style>
 </head>
 <body>
   <div id="youtube-audio" data-video="eFhJONPmz-U" data-autoplay="1" data-loop="1"></div>
   <div class="scene-wrapper" id="wrapper">
     <div class="scene" id="scene"></div>
-  </div>
-  <div class="controls">
-    <button onclick="toggleAudio()">Play/Pause</button>
-    <button onclick="adjustVolume(0.1)">Volume Up</button>
-    <button onclick="adjustVolume(-0.1)">Volume Down</button>
   </div>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
@@ -193,15 +140,15 @@
       "Mãi bên nhau nha",
       "Vịt yêu của anh",
       "Mèo yêu Vịt",
-      "Yêu em nhiều lắm",
+      "Yêu em nhiều lắm"
     ];
 
-    const maxElements = 20; 
-    const texts = [];
-    const hearts = [];
-    const stars = [];
+    const textPool = [];
+    const heartPool = [];
+    const maxElements = 30; // Reduced max elements
+    const minDistance = 100; // Minimum distance between texts
 
-   
+    const stars = [];
     function createStar() {
       const star = document.createElement('div');
       star.classList.add('star');
@@ -211,7 +158,7 @@
       return star;
     }
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 150; i++) { // Reduced star count
       stars.push(createStar());
     }
 
@@ -222,55 +169,87 @@
       });
     }
 
+    function isPositionValid(x, y, elements) {
+      return Array.from(elements).every(el => {
+        if (el.style.display === 'none') return true;
+        const elX = parseFloat(el.style.left);
+        const elY = parseFloat(el.style.top);
+        const distance = Math.sqrt((x - elX) ** 2 + (y - elY) ** 2);
+        return distance > minDistance;
+      });
+    }
 
-    for (let i = 0; i < maxElements; i++) {
-      const text = document.createElement('div');
-      text.className = 'float-text';
+    function createFloatingText() {
+      if (textPool.length === 0 && scene.getElementsByClassName('float-text').length >= maxElements) {
+        return;
+      }
+
+      let text;
+      if (textPool.length > 0) {
+        text = textPool.pop();
+        text.style.display = 'block';
+      } else {
+        text = document.createElement('div');
+        text.className = 'float-text';
+        scene.appendChild(text);
+      }
+
+      let attempts = 0;
+      let x, y;
+      do {
+        x = Math.random() * (window.innerWidth - 100);
+        y = window.innerHeight;
+        attempts++;
+        if (attempts > 10) return; // Prevent infinite loops
+      } while (!isPositionValid(x, y, scene.getElementsByClassName('float-text')));
+
       text.innerText = phrases[Math.floor(Math.random() * phrases.length)];
-      text.style.left = Math.random() * (window.innerWidth - 100) + 'px';
-      text.style.animationDuration = 8 + Math.random() * 5 + 's';
-      text.style.fontSize = 16 + Math.random() * 14 + 'px';
-      text.style.animationDelay = Math.random() * -10 + 's'; // Phân bố thời gian xuất hiện
-      scene.appendChild(text);
-      texts.push(text);
+      text.style.left = x + 'px';
+      text.style.top = y + 'px';
+      text.style.animationDuration = 10 + Math.random() * 4 + 's';
+      text.style.fontSize = clamp(14, 3 * window.innerWidth / 100, 16) + 'px';
+
+      setTimeout(() => {
+        text.style.display = 'none';
+        textPool.push(text);
+      }, 14000);
     }
 
-    // Tạo trước các phần tử trái tim
-    for (let i = 0; i < maxElements; i++) {
-      const heart = document.createElement('div');
-      heart.className = 'heart';
-      heart.style.left = Math.random() * (window.innerWidth - 20) + 'px';
-      heart.style.animationDuration = 8 + Math.random() * 5 + 's';
-      heart.style.animationDelay = Math.random() * -10 + 's'; // Phân bố thời gian xuất hiện
-      scene.appendChild(heart);
-      hearts.push(heart);
+    function createHeart() {
+      if (heartPool.length === 0 && scene.getElementsByClassName('heart').length >= maxElements) {
+        return;
+      }
+
+      let heart;
+      if (heartPool.length > 0) {
+        heart = heartPool.pop();
+        heart.style.display = 'block';
+      } else {
+        heart = document.createElement('div');
+        heart.className = 'heart';
+        scene.appendChild(heart);
+      }
+
+      let x;
+      let attempts = 0;
+      do {
+        x = Math.random() * (window.innerWidth - 100);
+        attempts++;
+        if (attempts > 10) return;
+      } while (!isPositionValid(x, window.innerHeight, scene.getElementsByClassName('heart')));
+
+      heart.style.left = x + 'px';
+      heart.style.top = window.innerHeight + 'px';
+      heart.style.animationDuration = 10 + Math.random() * 4 + 's';
+
+      setTimeout(() => {
+        heart.style.display = 'none';
+        heartPool.push(heart);
+      }, 14000);
     }
 
-   
-    function resetText(text) {
-      text.innerText = phrases[Math.floor(Math.random() * phrases.length)];
-      text.style.left = Math.random() * (window.innerWidth - 100) + 'px';
-      text.style.animation = 'none';
-      text.offsetHeight; // Trigger reflow
-      text.style.animation = `floatUp ${8 + Math.random() * 5}s linear infinite`;
-      text.style.fontSize = 16 + Math.random() * 14 + 'px';
-    }
-
-    function resetHeart(heart) {
-      heart.style.left = Math.random() * (window.innerWidth - 20) + 'px';
-      heart.style.animation = 'none';
-      heart.offsetHeight; // Trigger reflow
-      heart.style.animation = `floatUp ${8 + Math.random() * 5}s linear infinite`;
-    }
-
-    // Gắn sự kiện animationiteration để reset
-    texts.forEach(text => {
-      text.addEventListener('animationiteration', () => resetText(text));
-    });
-
-    hearts.forEach(heart => {
-      heart.addEventListener('animationiteration', () => resetHeart(heart));
-    });
+    setInterval(createFloatingText, 600); // Slower spawn rate
+    setInterval(createHeart, 1000); // Slower spawn rate
 
     window.addEventListener('resize', updateStars);
 
@@ -307,10 +286,10 @@
 
     window.addEventListener('mousemove', e => {
       if (isDragging) {
-        targetRotateY += (e.clientX - lastX) * 0.3; // Tăng độ nhạy
-        targetRotateX -= (e.clientY - lastY) * 0.3;
-        targetRotateX = clamp(targetRotateX, -30, 30);
-        targetRotateY = clamp(targetRotateY, -30, 30);
+        targetRotateY += (e.clientX - lastX) * 0.15; // Reduced sensitivity
+        targetRotateX -= (e.clientY - lastY) * 0.15;
+        targetRotateX = clamp(targetRotateX, -20, 20); // Reduced rotation range
+        targetRotateY = clamp(targetRotateY, -20, 20);
         lastX = e.clientX;
         lastY = e.clientY;
       }
@@ -330,16 +309,15 @@
       const touch = e.touches[0];
       let dx = touch.clientX - touchStartX;
       let dy = touch.clientY - touchStartY;
-      targetRotateY += dx * 0.3; // Tăng độ nhạy cho cảm ứng
-      targetRotateX -= dy * 0.3;
-      targetRotateX = clamp(targetRotateX, -30, 30);
-      targetRotateY = clamp(targetRotateY, -30, 30);
+      targetRotateY += dx * 0.15;
+      targetRotateX -= dy * 0.15;
+      targetRotateX = clamp(targetRotateX, -20, 20);
+      targetRotateY = clamp(targetRotateY, -20, 20);
       touchStartX = touch.clientX;
       touchStartY = touch.clientY;
     });
 
     let player;
-    let isPlaying = false;
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('youtube-audio', {
         height: '0',
@@ -356,7 +334,6 @@
         events: {
           'onReady': function(event) {
             event.target.playVideo();
-            isPlaying = true;
           },
           'onStateChange': function(event) {
             if (event.data === YT.PlayerState.ENDED) {
@@ -367,30 +344,9 @@
       });
     }
 
-    function toggleAudio() {
-      if (player && player.getPlayerState) {
-        if (isPlaying) {
-          player.pauseVideo();
-          isPlaying = false;
-        } else {
-          player.playVideo();
-          isPlaying = true;
-        }
-      }
-    }
-
-    function adjustVolume(change) {
-      if (player && player.getVolume) {
-        let currentVolume = player.getVolume();
-        let newVolume = clamp(currentVolume + change * 100, 0, 100);
-        player.setVolume(newVolume);
-      }
-    }
-
     function tryPlayYouTube() {
       if (player && player.playVideo) {
         player.playVideo();
-        isPlaying = true;
       }
     }
 
