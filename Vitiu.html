@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitiu</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: black;
+      color: white;
+      font-family: sans-serif;
+      perspective: 1000px;
+    }
+
+    .scene-wrapper {
+      width: 100vw;
+      height: 100vh;
+      transform-style: preserve-3d;
+      transform: rotateX(0deg) rotateY(0deg);
+      transition: transform 0.1s ease-out;
+    }
+
+    .scene {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .star {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.5; /* Tăng độ sáng */
+      filter: blur(1px);
+      box-shadow: 
+        0 0 8px white, /* Ánh sáng gần */
+        0 0 15px rgba(255, 255, 255, 0.7), /* Ánh sáng trung bình */
+        0 0 25px rgba(255, 255, 255, 0.4); /* Ánh sáng lan tỏa xa */
+    }
+
+    .float-text {
+      position: absolute;
+      font-size: 20px;
+      color: hotpink;
+      opacity: 0.9;
+      animation: floatUp 10s linear infinite;
+      white-space: nowrap;
+      text-shadow: 
+        0 0 8px hotpink,
+        0 0 15px hotpink,
+        0 0 25px rgba(255, 105, 180, 0.8),
+        0 0 40px rgba(255, 105, 180, 0.6);
+    }
+
+    .heart {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: hotpink;
+      transform: rotate(45deg);
+      animation: floatUp 10s linear infinite;
+      opacity: 0.8;
+      box-shadow: 
+        0 0 10px hotpink,
+        0 0 20px rgba(255, 105, 180, 0.7);
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: hotpink;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      top: -10px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: -10px;
+      top: 0;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(50vh);
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh);
+        opacity: 0;
+      }
+    }
+
+    #youtube-audio {
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+  <div id="youtube-audio" data-video="eFhJONPmz-U" data-autoplay="1" data-loop="1"></div>
+  <div class="scene-wrapper" id="wrapper">
+    <div class="scene" id="scene"></div>
+  </div>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    const wrapper = document.getElementById('wrapper');
+    const scene = document.getElementById('scene');
+    const youtubeAudio = document.getElementById('youtube-audio');
+
+    const phrases = [
+        "Anh biết em đang nhớ anh",
+        "Anh cũng đang nhớ em",
+        "Anh yêu em",
+        "Nhớ em",
+        "Vịt yêu",
+        "Mãi bên nhau nha",
+        "Em là tất cả của anh",
+        "Tình yêu của anh",
+        "Mèo yêu Vịt",
+        "Yêu em nhiều lắm",
+        "Vại tương lơ",
+        "Vịt yêu Mèo",
+    ];
+
+    const textPool = [];
+    const heartPool = [];
+    const maxElements = 50;
+
+    const stars = [];
+    function createStar() {
+      const star = document.createElement('div');
+      star.classList.add('star');
+      star.style.left = Math.random() * window.innerWidth + 'px';
+      star.style.top = Math.random() * window.innerHeight + 'px';
+      scene.appendChild(star);
+      return star;
+    }
+
+    for (let i = 0; i < 200; i++) {
+      stars.push(createStar());
+    }
+
+    function updateStars() {
+      stars.forEach(star => {
+        star.style.left = Math.random() * window.innerWidth + 'px';
+        star.style.top = Math.random() * window.innerHeight + 'px';
+      });
+    }
+
+    function createFloatingText() {
+      let text;
+      if (textPool.length > 0) {
+        text = textPool.pop();
+        text.style.display = 'block';
+      } else if (scene.getElementsByClassName('float-text').length < maxElements) {
+        text = document.createElement('div');
+        text.className = 'float-text';
+        scene.appendChild(text);
+      } else {
+        return;
+      }
+
+      text.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+      text.style.left = Math.random() * window.innerWidth + 'px';
+      text.style.animationDuration = 8 + Math.random() * 5 + 's';
+      text.style.fontSize = 16 + Math.random() * 14 + 'px';
+
+      setTimeout(() => {
+        text.style.display = 'none';
+        textPool.push(text);
+      }, 22000);
+    }
+
+    function createHeart() {
+      let heart;
+      if (heartPool.length > 0) {
+        heart = heartPool.pop();
+        heart.style.display = 'block';
+      } else if (scene.getElementsByClassName('heart').length < maxElements) {
+        heart = document.createElement('div');
+        heart.className = 'heart';
+        scene.appendChild(heart);
+      } else {
+        return;
+      }
+
+      heart.style.left = Math.random() * window.innerWidth + 'px';
+      heart.style.animationDuration = 8 + Math.random() * 5 + 's';
+
+      setTimeout(() => {
+        heart.style.display = 'none';
+        heartPool.push(heart);
+      }, 22000);
+    }
+
+    setInterval(createFloatingText, 400);
+    setInterval(createHeart, 800);
+
+    window.addEventListener('resize', updateStars);
+
+    let rotateX = 0;
+    let rotateY = 0;
+    let isDragging = false;
+    let lastX, lastY;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateTransform() {
+      wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    let targetRotateX = 0;
+    let targetRotateY = 0;
+    function smoothRotate() {
+      rotateX += (targetRotateX - rotateX) * 0.1;
+      rotateY += (targetRotateY - rotateY) * 0.1;
+      updateTransform();
+      requestAnimationFrame(smoothRotate);
+    }
+    smoothRotate();
+
+    wrapper.addEventListener('mousedown', e => {
+      isDragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    window.addEventListener('mousemove', e => {
+      if (isDragging) {
+        targetRotateY += (e.clientX - lastX) * 0.2;
+        targetRotateX -= (e.clientY - lastY) * 0.2;
+
+        targetRotateX = clamp(targetRotateX, -30, 30);
+        targetRotateY = clamp(targetRotateY, -30, 30);
+
+        lastX = e.clientX;
+        lastY = e.clientY;
+      }
+    });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    wrapper.addEventListener('touchstart', e => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    });
+
+    wrapper.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      let dx = touch.clientX - touchStartX;
+      let dy = touch.clientY - touchStartY;
+      targetRotateY += dx * 0.2;
+      targetRotateX -= dy * 0.2;
+
+      targetRotateX = clamp(targetRotateX, -30, 30);
+      targetRotateY = clamp(targetRotateY, -30, 30);
+
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    });
+
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('youtube-audio', {
+        height: '0',
+        width: '0',
+        videoId: youtubeAudio.dataset.video,
+        playerVars: {
+          autoplay: 1,
+          loop: 1,
+          playlist: youtubeAudio.dataset.video,
+          controls: 0,
+          showinfo: 0,
+          modestbranding: 1,
+        },
+        events: {
+          'onReady': function(event) {
+            event.target.playVideo();
+          },
+          'onStateChange': function(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+              event.target.playVideo();
+            }
+          }
+        }
+      });
+    }
+
+    function tryPlayYouTube() {
+      if (player && player.playVideo) {
+        player.playVideo();
+      }
+    }
+
+    document.addEventListener('click', tryPlayYouTube, { once: true });
+    document.addEventListener('touchstart', tryPlayYouTube, { once: true });
+  </script>
+</body>
+</html>
